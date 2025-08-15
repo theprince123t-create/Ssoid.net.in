@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>CricHeroes Overlay</title>
+<style>
+    body {
+        margin: 0;
+        padding: 0;
+        background: transparent;
+        font-family: Arial, sans-serif;
+        color: white;
+    }
+    .overlay {
+        position: fixed;
+        bottom: 0;
+        width: 100%;
+        background: rgba(0, 40, 80, 0.8);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 15px;
+        font-size: 14px;
+    }
+    .team-section {
+        display: flex;
+        align-items: center;
+    }
+    .player {
+        margin-right: 15px;
+    }
+    .balls {
+        display: flex;
+        gap: 4px;
+    }
+    .ball {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: white;
+    }
+    .ball.run { background: green; }
+    .ball.wicket { background: red; }
+    .ball.dot { background: white; opacity: 0.5; }
+</style>
+</head>
+<body>
+<div class="overlay">
+    <div class="team-section" id="batsmen">
+        <div class="player" id="batsman1">Batsman 1</div>
+        <div class="player" id="batsman2">Batsman 2</div>
+    </div>
+    <div id="score">0-0 (0.0)</div>
+    <div class="team-section">
+        <div id="bowler">Bowler</div>
+        <div class="balls" id="balls"></div>
+    </div>
+</div>
+<script src="script.js"></script>
+</body>
+</html>
