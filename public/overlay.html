@@ -2,13 +2,19 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Live Overlay</title>
   <style>
-    body { margin:0; background:transparent; font-family: Inter, sans-serif; }
+    body {
+      margin: 0;
+      background: transparent;
+      font-family: Arial, sans-serif;
+    }
     .overlay {
       position: fixed;
-      bottom: 0; left: 0; right: 0;
+      bottom: 0;
+      left: 0;
+      right: 0;
       background: rgba(0, 80, 180, 0.8);
       padding: 12px 20px;
       display: flex;
@@ -17,11 +23,26 @@
       font-size: 18px;
       color: white;
       backdrop-filter: blur(6px);
+      box-shadow: 0 -2px 10px rgba(0,0,0,0.5);
     }
-    .block { display: flex; flex-direction: column; }
-    .score { font-size: 24px; font-weight: bold; }
-    .sub { font-size: 14px; opacity: 0.9; }
-    .balls { display: flex; gap: 6px; }
+    .block {
+      display: flex;
+      flex-direction: column;
+      min-width: 120px;
+    }
+    .score {
+      font-size: 24px;
+      font-weight: bold;
+    }
+    .sub {
+      font-size: 14px;
+      opacity: 0.9;
+    }
+    .balls {
+      display: flex;
+      gap: 6px;
+      margin-top: 4px;
+    }
     .ball {
       width: 20px;
       height: 20px;
@@ -30,8 +51,6 @@
       font-size: 14px;
       line-height: 20px;
       text-align: center;
-      position: relative;
-      overflow: hidden;
     }
     .ball.animate {
       animation: pop 0.6s ease-out;
@@ -47,7 +66,7 @@
 </head>
 <body>
   <div class="overlay">
-    <div class="block">
+    <div class="block" id="batsmen">
       <div id="bat1">Batter 1 0(0)</div>
       <div id="bat2">Batter 2 0(0)</div>
     </div>
@@ -64,33 +83,35 @@
     </div>
   </div>
 
-<script>
-async function pull(){
-  try {
-    const res = await fetch('/api/score', { cache:'no-store' });
-    const d = await res.json();
+  <script>
+    async function pull(){
+      try {
+        const res = await fetch('/api/score', { cache:'no-store' });
+        const d = await res.json();
 
-    document.getElementById('bat1').textContent = d.batsman1 || '';
-    document.getElementById('bat2').textContent = d.batsman2 || '';
-    document.getElementById('score').textContent = d.score || '';
-    document.getElementById('rrcrr').textContent = `RR: ${d.rr || ''} | CRR: ${d.crr || ''}`;
-    document.getElementById('bowler').textContent = d.bowler || '';
+        document.getElementById('bat1').textContent = d.batsman1 || '';
+        document.getElementById('bat2').textContent = d.batsman2 || '';
+        document.getElementById('score').textContent = d.score || '';
+        document.getElementById('rrcrr').textContent = `RR: ${d.rr || ''} | CRR: ${d.crr || ''}`;
+        document.getElementById('bowler').textContent = d.bowler || '';
 
-    const container = document.getElementById('recentBalls');
-    container.innerHTML = '';
-    (d.balls || []).slice(-6).forEach(sym => {
-      const el = document.createElement('div');
-      el.className = 'ball';
-      el.textContent = sym === '.' ? '' : sym;
-      container.appendChild(el);
-      if (sym === '4' || sym === '6') {
-        el.classList.add('animate');
+        const container = document.getElementById('recentBalls');
+        container.innerHTML = '';
+        (d.balls || []).slice(-6).forEach(sym => {
+          const el = document.createElement('div');
+          el.className = 'ball';
+          el.textContent = sym === '.' ? '' : sym;
+          if (sym === '4' || sym === '6') {
+            el.classList.add('animate');
+          }
+          container.appendChild(el);
+        });
+      } catch(e){
+        console.error(e);
       }
-    });
-  } catch(e){ console.error(e) }
-}
-pull();
-setInterval(pull, 3000);
-</script>
+    }
+    pull();
+    setInterval(pull, 3000);
+  </script>
 </body>
 </html>
