@@ -7,59 +7,63 @@
   <style>
     body {
       margin: 0;
-      padding: 0;
       background: transparent;
       font-family: Arial, sans-serif;
     }
-    .scoreboard {
-      position: fixed;
+    .overlay {
+      position: absolute;
       bottom: 20px;
       left: 50%;
       transform: translateX(-50%);
-      background: rgba(0, 40, 80, 0.9);
-      color: #fff;
+      background: #003366;
+      color: white;
       padding: 10px 20px;
       border-radius: 10px;
+      font-size: 16px;
       display: flex;
-      gap: 20px;
       align-items: center;
-      font-size: 18px;
+      gap: 25px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.5);
     }
     .team {
       font-weight: bold;
+      font-size: 18px;
     }
-    .overs, .batsman, .bowler {
+    .score {
+      font-size: 18px;
+    }
+    .batsman, .bowler {
       font-size: 14px;
-      color: #ddd;
     }
   </style>
 </head>
 <body>
-  <div class="scoreboard" id="scoreboard">
-    Loading score...
+  <div class="overlay">
+    <div class="team" id="team1">Team A</div>
+    <div class="score" id="score">0/0 (0.0)</div>
+    <div class="team" id="team2">Team B</div>
+    <div class="batsman" id="batsman">Batsman: -</div>
+    <div class="bowler" id="bowler">Bowler: -</div>
   </div>
 
   <script>
-    async function loadScore() {
+    async function fetchData() {
       try {
-        const res = await fetch("/api/score");
+        const res = await fetch("/data.json");
         const data = await res.json();
 
-        document.getElementById("scoreboard").innerHTML = `
-          <div>
-            <div class="team">${data.team1} vs ${data.team2}</div>
-            <div>Score: ${data.score} (${data.overs} ov)</div>
-            <div class="batsman">Batsman: ${data.batsman}</div>
-            <div class="bowler">Bowler: ${data.bowler}</div>
-          </div>
-        `;
-      } catch (err) {
-        document.getElementById("scoreboard").innerText = "Error loading score";
+        document.getElementById("team1").textContent = data.team1;
+        document.getElementById("team2").textContent = data.team2;
+        document.getElementById("score").textContent = data.score + " (" + data.overs + ")";
+        document.getElementById("batsman").textContent = data.batsman;
+        document.getElementById("bowler").textContent = data.bowler;
+      } catch (e) {
+        console.error("Error fetching data", e);
       }
     }
 
-    loadScore();
-    setInterval(loadScore, 5000); // har 5 second me update hoga
+    setInterval(fetchData, 2000);
+    fetchData();
   </script>
 </body>
 </html>
