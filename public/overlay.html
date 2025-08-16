@@ -2,140 +2,112 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Live Cricket Overlay</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Live Overlay</title>
   <style>
-    body {
-      margin: 0;
-      padding: 0;
-      font-family: Arial, sans-serif;
-      background: transparent;
-    }
-
-    .scorebar {
+    body { margin:0; background:transparent; font-family: Inter, sans-serif; }
+    .overlay {
       position: fixed;
-      bottom: 0;
-      left: 0;
-      width: 100%;
-      background: #003366;
-      color: white;
+      bottom: 0; left: 0; right: 0;
+      background: rgba(0, 80, 180, 0.8);
+      padding: 12px 20px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 8px 15px;
-      box-sizing: border-box;
-      font-size: 16px;
-    }
-
-    .team {
-      flex: 1;
-      text-align: left;
-    }
-
-    .score {
-      flex: 1;
-      text-align: center;
       font-size: 18px;
-      font-weight: bold;
+      color: white;
+      backdrop-filter: blur(6px);
     }
-
-    .bowler {
-      flex: 1;
-      text-align: right;
-    }
-
-    .player {
-      font-size: 14px;
-    }
-
-    .small {
-      font-size: 12px;
-      opacity: 0.8;
-    }
-
-    .balls {
-      margin-top: 5px;
-      display: flex;
-      gap: 4px;
-      justify-content: center;
-    }
-
+    .block { display: flex; flex-direction: column; }
+    .score { font-size: 24px; font-weight: bold; }
+    .sub { font-size: 14px; opacity: 0.9; }
+    .balls { display: flex; gap: 6px; }
     .ball {
-      width: 10px;
-      height: 10px;
+      width: 20px; height: 20px;
       border-radius: 50%;
-      background: white;
+      background: rgba(255,255,255,0.5);
+      font-size: 14px; line-height: 20px;
+      text-align: center;
+    }
+    /* 🔥 GIF effect container */
+    .effect {
+      position: fixed;
+      top: 30%; left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 999;
+      display: none;
+    }
+    .effect img {
+      max-width: 300px;
     }
   </style>
 </head>
 <body>
-  <div class="scorebar">
-    <!-- Left side (Batsmen) -->
-    <div class="team">
-      <div class="player" id="batter1">Batter 1 0(0)</div>
-      <div class="player" id="batter2">Batter 2 0(0)</div>
+  <div class="overlay">
+    <div class="block">
+      <div id="bat1">Batter 1 0(0)</div>
+      <div id="bat2">Batter 2 0(0)</div>
     </div>
-
-    <!-- Center (Score & Run Rates) -->
-    <div class="score">
-      <div id="score">0-0 (0.0)</div>
-      <div class="small">
-        RR: <span id="rr">0.0</span> | CRR: <span id="crr">0.0</span>
-      </div>
-      <div class="balls" id="balls">
-        <div class="ball"></div>
-        <div class="ball"></div>
-        <div class="ball"></div>
-        <div class="ball"></div>
-        <div class="ball"></div>
-        <div class="ball"></div>
-      </div>
+    <div class="block" style="align-items:center;">
+      <div id="score" class="score">0-0 (0.0)</div>
+      <div id="rrcrr" class="sub">RR: 0.00 | CRR: 0.00</div>
     </div>
-
-    <!-- Right side (Bowler) -->
-    <div class="bowler">
+    <div class="block" style="text-align:right;">
       <div id="bowler">Bowler 0-0 (0)</div>
+      <div class="balls" id="recentBalls"></div>
     </div>
   </div>
 
-  <script>
-    async function fetchScore() {
-      try {
-        const res = await fetch("/api/score");
-        const data = await res.json();
+  <!-- 🔥 Effects -->
+  <div class="effect" id="effectBox">
+    <img id="effectGif" src="" alt="effect"/>
+  </div>
 
-        // Update UI with API data (agar value aaye to)
-        document.getElementById("score").innerText = data.score || "0-0 (0.0)";
-        document.getElementById("batter1").innerText = data.batter1 || "Batter 1 0(0)";
-        document.getElementById("batter2").innerText = data.batter2 || "Batter 2 0(0)";
-        document.getElementById("bowler").innerText = data.bowler || "Bowler 0-0 (0)";
-        document.getElementById("rr").innerText = data.rr || "0.0";
-        document.getElementById("crr").innerText = data.crr || "0.0";
+<script>
+async function pull(){
+  try {
+    const res = await fetch('/api/score', { cache:'no-store' });
+    const d = await res.json();
 
-        // Balls ka animation / update
-        const ballsEl = document.getElementById("balls");
-        ballsEl.innerHTML = "";
-        if (data.balls) {
-          data.balls.forEach(b => {
-            const dot = document.createElement("div");
-            dot.classList.add("ball");
-            if (b === "4") dot.style.background = "yellow";
-            else if (b === "6") dot.style.background = "orange";
-            else if (b === "W") dot.style.background = "red";
-            else if (b !== ".") dot.style.background = "lightgreen";
-            ballsEl.appendChild(dot);
-          });
-        }
-      } catch (err) {
-        console.error("Error fetching score:", err);
+    document.getElementById('bat1').textContent = d.batsman1 || '';
+    document.getElementById('bat2').textContent = d.batsman2 || '';
+    document.getElementById('score').textContent = d.score || '';
+    document.getElementById('rrcrr').textContent = `RR: ${d.rr || ''} | CRR: ${d.crr || ''}`;
+    document.getElementById('bowler').textContent = d.bowler || '';
+
+    const container = document.getElementById('recentBalls');
+    container.innerHTML = '';
+    (d.balls || []).slice(-6).forEach(sym => {
+      const el = document.createElement('div');
+      el.className = 'ball';
+      el.textContent = sym === '.' ? '' : sym;
+      container.appendChild(el);
+
+      if(sym === '4' || sym === '6' || sym.toUpperCase()==='W'){
+        triggerEffect(sym);
       }
-    }
+    });
+  } catch(e){ console.error(e) }
+}
 
-    // Pehle load karo
-    fetchScore();
+function triggerEffect(sym){
+  const effectBox = document.getElementById("effectBox");
+  const effectGif = document.getElementById("effectGif");
+  
+  if(sym === "4"){
+    effectGif.src = "https://media.giphy.com/media/3oEjHWpiVIOGXT5l9m/giphy.gif"; // streak gif
+  } else if(sym === "6"){
+    effectGif.src = "https://media.giphy.com/media/26gsl6nO2QqbQK7du/giphy.gif"; // fireworks
+  } else if(sym.toUpperCase() === "W"){
+    effectGif.src = "https://media.giphy.com/media/l3vR9O8P4z3ZLzj3O/giphy.gif"; // crack effect
+  }
 
-    // Har 10 second update
-    setInterval(fetchScore, 10000);
-  </script>
+  effectBox.style.display = "block";
+  setTimeout(()=>{ effectBox.style.display="none"; }, 2500);
+}
+
+pull();
+setInterval(pull, 3000);
+</script>
 </body>
 </html>
