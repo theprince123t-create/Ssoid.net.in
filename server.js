@@ -1,35 +1,46 @@
 import express from "express";
-import fetch from "node-fetch";
-import * as cheerio from "cheerio";
-import dotenv from "dotenv";
+import fetch from "node-fetch"; // ensure yeh dependency install ho
+import path from "path";
+import { fileURLToPath } from "url";
 
-dotenv.config();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Overlay page serve karega
-app.use(express.static("public"));
+// Static serve overlay.html
+app.use(express.static(path.join(__dirname, "public")));
 
-// Example endpoint jo CricHeroes ka data fetch karega
-app.get("/score", async (req, res) => {
+// API to fetch score
+app.get("/api/score", async (req, res) => {
   try {
-    const matchUrl = process.env.MATCH_URL; // .env file me apna CricHeroes URL daalo
+    // yahan tum apna match ka Cricheroes URL doge
+    const matchUrl = "https://cricheroes.com/scorecard/18741543/amateur-league-t10/mahatma-xi-vs-tunga-sports/live";
 
     const response = await fetch(matchUrl);
-    const body = await response.text();
-    const $ = cheerio.load(body);
+    const html = await response.text();
 
-    // yahan par HTML scrape karke score nikalna hai (CricHeroes ka structure dekh kar customize karna padega)
-    let score = $("div.score").text() || "Score not found";
+    // simple regex scraping (demo ke liye)
+    // NOTE: Yeh basic hai, aapko cheerio library use karna better hoga production me
+    const scoreMatch = html.match(/"scoreStr":"([^"]+)"/);
+    const batterMatch = html.match(/"striker":"([^"]+)"/);
+    const bowlerMatch = html.match(/"bowler":"([^"]+)"/);
 
-    res.json({ score });
+    res.json({
+      score: scoreMatch ? scoreMatch[1] : "0-0 (0.0)",
+      batter1: batterMatch ? batterMatch[1] : "Batter 1 0(0)",
+      batter2: "Batter 2 0(0)", // demo ke liye
+      bowler: bowlerMatch ? bowlerMatch[1] : "Bowler 0-0 (0)",
+      rr: "7.00",
+      crr: "7.00"
+    });
   } catch (err) {
-    console.error(err);
+    console.error("Score fetch failed:", err);
     res.status(500).json({ error: "Failed to fetch score" });
   }
 });
 
 app.listen(PORT, () => {
-  console.log(`✅ Server running on port ${PORT}`);
+  console.log(`Server running on http://localhost:${PORT}`);
 });
