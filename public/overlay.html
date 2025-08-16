@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Live Cricket Overlay</title>
+  <title>Score Overlay</title>
   <style>
     body {
       margin: 0;
@@ -11,123 +11,55 @@
       background: transparent;
       font-family: Arial, sans-serif;
     }
-
-    .overlay {
+    .scoreboard {
       position: fixed;
-      bottom: 0;
-      left: 0;
-      width: 100%;
-      background: #004080;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 40, 80, 0.9);
       color: #fff;
+      padding: 10px 20px;
+      border-radius: 10px;
       display: flex;
-      justify-content: space-between;
+      gap: 20px;
       align-items: center;
-      padding: 8px 20px;
       font-size: 18px;
     }
-
-    .team-info {
-      display: flex;
-      flex-direction: column;
-      font-size: 16px;
+    .team {
+      font-weight: bold;
     }
-
-    .score-info {
-      text-align: center;
-      flex: 1;
-      font-size: 18px;
-    }
-
-    .bowler-info {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-end;
-      font-size: 16px;
-    }
-
-    .balls {
-      display: flex;
-      margin-top: 4px;
-    }
-
-    .ball {
-      width: 12px;
-      height: 12px;
-      border-radius: 50%;
-      border: 1px solid white;
-      margin-left: 4px;
-      background: transparent;
-    }
-
-    .ball.filled {
-      background: white;
+    .overs, .batsman, .bowler {
+      font-size: 14px;
+      color: #ddd;
     }
   </style>
 </head>
 <body>
-  <div class="overlay">
-    <!-- Left: batsmen -->
-    <div class="team-info" id="batsmen">
-      <div id="batsman1">Player A 0(0)</div>
-      <div id="batsman2">Player B 0(0)</div>
-    </div>
-
-    <!-- Center: score + overs -->
-    <div class="score-info">
-      <div id="score">0/0 (0.0)</div>
-      <div id="rr">RR: 0.00 | CRR: 0.00</div>
-    </div>
-
-    <!-- Right: bowler -->
-    <div class="bowler-info">
-      <div id="bowler">Bowler - 0/0 (0)</div>
-      <div class="balls" id="balls">
-        <div class="ball"></div>
-        <div class="ball"></div>
-        <div class="ball"></div>
-        <div class="ball"></div>
-        <div class="ball"></div>
-        <div class="ball"></div>
-      </div>
-    </div>
+  <div class="scoreboard" id="scoreboard">
+    Loading score...
   </div>
 
   <script>
-    async function fetchScore() {
+    async function loadScore() {
       try {
         const res = await fetch("/api/score");
         const data = await res.json();
 
-        // Batsmen
-        document.getElementById("batsman1").textContent = data.batsman1 || "Player A 0(0)";
-        document.getElementById("batsman2").textContent = data.batsman2 || "Player B 0(0)";
-
-        // Score
-        document.getElementById("score").textContent = `${data.score} (${data.overs})`;
-
-        // Run Rates
-        document.getElementById("rr").textContent = `RR: ${data.rr || "0.00"} | CRR: ${data.crr || "0.00"}`;
-
-        // Bowler
-        document.getElementById("bowler").textContent = `${data.bowler || "Bowler"} - ${data.bowlerfigures || "0/0 (0)"}`;
-
-        // Balls update (e.g. W, 1, 0 etc.)
-        const ballsContainer = document.getElementById("balls");
-        ballsContainer.innerHTML = "";
-        if (data.balls) {
-          data.balls.forEach(ball => {
-            const div = document.createElement("div");
-            div.className = "ball " + (ball === "•" ? "filled" : "");
-            ballsContainer.appendChild(div);
-          });
-        }
+        document.getElementById("scoreboard").innerHTML = `
+          <div>
+            <div class="team">${data.team1} vs ${data.team2}</div>
+            <div>Score: ${data.score} (${data.overs} ov)</div>
+            <div class="batsman">Batsman: ${data.batsman}</div>
+            <div class="bowler">Bowler: ${data.bowler}</div>
+          </div>
+        `;
       } catch (err) {
-        console.error("Error fetching score", err);
+        document.getElementById("scoreboard").innerText = "Error loading score";
       }
     }
 
-    setInterval(fetchScore, 3000);
-    fetchScore();
+    loadScore();
+    setInterval(loadScore, 5000); // har 5 second me update hoga
   </script>
 </body>
 </html>
