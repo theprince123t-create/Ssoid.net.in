@@ -1,16 +1,15 @@
 {
   "name": "ssoid-net-inlive",
   "version": "1.0.0",
-  "description": "Live cricket overlay server",
   "main": "server.js",
   "type": "module",
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
+    "cheerio": "^1.0.0",
+    "dotenv": "^16.4.5",
     "express": "^4.19.2",
-    "cheerio": "^1.0.0-rc.12",
-    "node-fetch": "^3.3.2",
-    "dotenv": "^16.4.5"
+    "node-fetch": "^3.3.2"
   }
 }
