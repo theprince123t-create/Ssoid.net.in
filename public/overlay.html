@@ -1,69 +1,96 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Score Overlay</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Live Overlay</title>
   <style>
-    body {
-      margin: 0;
-      background: transparent;
-      font-family: Arial, sans-serif;
-    }
+    body { margin:0; background:transparent; font-family: Inter, sans-serif; }
     .overlay {
-      position: absolute;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: #003366;
-      color: white;
-      padding: 10px 20px;
-      border-radius: 10px;
-      font-size: 16px;
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      background: rgba(0, 80, 180, 0.8);
+      padding: 12px 20px;
       display: flex;
       align-items: center;
-      gap: 25px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.5);
-    }
-    .team {
-      font-weight: bold;
+      justify-content: space-between;
       font-size: 18px;
+      color: white;
+      backdrop-filter: blur(6px);
     }
-    .score {
-      font-size: 18px;
-    }
-    .batsman, .bowler {
+    .block { display: flex; flex-direction: column; }
+    .score { font-size: 24px; font-weight: bold; }
+    .sub { font-size: 14px; opacity: 0.9; }
+    .balls { display: flex; gap: 6px; }
+    .ball {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.5);
       font-size: 14px;
+      line-height: 20px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .ball.animate {
+      animation: pop 0.6s ease-out;
+      background: gold;
+      color: black;
+    }
+    @keyframes pop {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.8); }
+      100% { transform: scale(1); }
     }
   </style>
 </head>
 <body>
   <div class="overlay">
-    <div class="team" id="team1">Team A</div>
-    <div class="score" id="score">0/0 (0.0)</div>
-    <div class="team" id="team2">Team B</div>
-    <div class="batsman" id="batsman">Batsman: -</div>
-    <div class="bowler" id="bowler">Bowler: -</div>
+    <div class="block">
+      <div id="bat1">Batter 1 0(0)</div>
+      <div id="bat2">Batter 2 0(0)</div>
+    </div>
+    <div class="block" style="align-items:center;">
+      <div id="score" class="score">0-0 (0.0)</div>
+      <div id="rrcrr" class="sub">RR: 0.00 | CRR: 0.00</div>
+    </div>
+    <div class="block" style="text-align:right;">
+      <div id="bowler">Bowler 0-0 (0)</div>
+      <div class="balls" id="recentBalls">
+        <div class="ball"></div><div class="ball"></div><div class="ball"></div>
+        <div class="ball"></div><div class="ball"></div><div class="ball"></div>
+      </div>
+    </div>
   </div>
 
-  <script>
-    async function fetchData() {
-      try {
-        const res = await fetch("/data.json");
-        const data = await res.json();
+<script>
+async function pull(){
+  try {
+    const res = await fetch('/api/score', { cache:'no-store' });
+    const d = await res.json();
 
-        document.getElementById("team1").textContent = data.team1;
-        document.getElementById("team2").textContent = data.team2;
-        document.getElementById("score").textContent = data.score + " (" + data.overs + ")";
-        document.getElementById("batsman").textContent = data.batsman;
-        document.getElementById("bowler").textContent = data.bowler;
-      } catch (e) {
-        console.error("Error fetching data", e);
+    document.getElementById('bat1').textContent = d.batsman1 || '';
+    document.getElementById('bat2').textContent = d.batsman2 || '';
+    document.getElementById('score').textContent = d.score || '';
+    document.getElementById('rrcrr').textContent = `RR: ${d.rr || ''} | CRR: ${d.crr || ''}`;
+    document.getElementById('bowler').textContent = d.bowler || '';
+
+    const container = document.getElementById('recentBalls');
+    container.innerHTML = '';
+    (d.balls || []).slice(-6).forEach(sym => {
+      const el = document.createElement('div');
+      el.className = 'ball';
+      el.textContent = sym === '.' ? '' : sym;
+      container.appendChild(el);
+      if (sym === '4' || sym === '6') {
+        el.classList.add('animate');
       }
-    }
-
-    setInterval(fetchData, 2000);
-    fetchData();
-  </script>
+    });
+  } catch(e){ console.error(e) }
+}
+pull();
+setInterval(pull, 3000);
+</script>
 </body>
 </html>
