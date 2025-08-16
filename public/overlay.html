@@ -1,117 +1,41 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
   <title>Live Overlay</title>
   <style>
-    body {
-      margin: 0;
-      background: transparent;
-      font-family: Arial, sans-serif;
-    }
-    .overlay {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      background: rgba(0, 80, 180, 0.8);
-      padding: 12px 20px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      font-size: 18px;
-      color: white;
-      backdrop-filter: blur(6px);
-      box-shadow: 0 -2px 10px rgba(0,0,0,0.5);
-    }
-    .block {
-      display: flex;
-      flex-direction: column;
-      min-width: 120px;
-    }
-    .score {
-      font-size: 24px;
-      font-weight: bold;
-    }
-    .sub {
-      font-size: 14px;
-      opacity: 0.9;
-    }
-    .balls {
-      display: flex;
-      gap: 6px;
-      margin-top: 4px;
-    }
-    .ball {
-      width: 20px;
-      height: 20px;
-      border-radius: 50%;
-      background: rgba(255,255,255,0.5);
-      font-size: 14px;
-      line-height: 20px;
-      text-align: center;
-    }
-    .ball.animate {
-      animation: pop 0.6s ease-out;
-      background: gold;
-      color: black;
-    }
-    @keyframes pop {
-      0% { transform: scale(1); }
-      50% { transform: scale(1.8); }
-      100% { transform: scale(1); }
-    }
+    body { margin:0; background:transparent; font-family:sans-serif; color:white; }
+    .overlay { background:#0077cc; padding:10px; position:fixed; bottom:0; width:100%; }
+    .row { display:flex; justify-content:space-between; }
   </style>
 </head>
 <body>
   <div class="overlay">
-    <div class="block" id="batsmen">
-      <div id="bat1">Batter 1 0(0)</div>
-      <div id="bat2">Batter 2 0(0)</div>
-    </div>
-    <div class="block" style="align-items:center;">
-      <div id="score" class="score">0-0 (0.0)</div>
-      <div id="rrcrr" class="sub">RR: 0.00 | CRR: 0.00</div>
-    </div>
-    <div class="block" style="text-align:right;">
-      <div id="bowler">Bowler 0-0 (0)</div>
-      <div class="balls" id="recentBalls">
-        <div class="ball"></div><div class="ball"></div><div class="ball"></div>
-        <div class="ball"></div><div class="ball"></div><div class="ball"></div>
-      </div>
-    </div>
+    <div id="batter1">Batter 1 0(0)</div>
+    <div id="batter2">Batter 2 0(0)</div>
+    <div id="score">0-0 (0.0)</div>
+    <div id="rr">RR: 0.00 | CRR: 0.00</div>
+    <div id="bowler">Bowler 0-0 (0)</div>
   </div>
 
   <script>
-    async function pull(){
+    async function loadScore() {
       try {
-        const res = await fetch('/api/score', { cache:'no-store' });
-        const d = await res.json();
+        const res = await fetch("/api/score");
+        const data = await res.json();
 
-        document.getElementById('bat1').textContent = d.batsman1 || '';
-        document.getElementById('bat2').textContent = d.batsman2 || '';
-        document.getElementById('score').textContent = d.score || '';
-        document.getElementById('rrcrr').textContent = `RR: ${d.rr || ''} | CRR: ${d.crr || ''}`;
-        document.getElementById('bowler').textContent = d.bowler || '';
-
-        const container = document.getElementById('recentBalls');
-        container.innerHTML = '';
-        (d.balls || []).slice(-6).forEach(sym => {
-          const el = document.createElement('div');
-          el.className = 'ball';
-          el.textContent = sym === '.' ? '' : sym;
-          if (sym === '4' || sym === '6') {
-            el.classList.add('animate');
-          }
-          container.appendChild(el);
-        });
-      } catch(e){
-        console.error(e);
+        document.getElementById("batter1").innerText = data.batter1;
+        document.getElementById("batter2").innerText = data.batter2;
+        document.getElementById("score").innerText = data.score;
+        document.getElementById("rr").innerText = `RR: ${data.rr} | CRR: ${data.crr}`;
+        document.getElementById("bowler").innerText = data.bowler;
+      } catch (e) {
+        console.error("Failed to load score", e);
       }
     }
-    pull();
-    setInterval(pull, 3000);
+
+    setInterval(loadScore, 5000);
+    loadScore();
   </script>
 </body>
 </html>
