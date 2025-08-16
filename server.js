@@ -1,33 +1,51 @@
-const express = require("express");
-const axios = require("axios");
-const cors = require("cors");
-const path = require("path");
+import express from "express";
+import axios from "axios";
+import cheerio from "cheerio";
+import cors from "cors";
+import path from "path";
+import dotenv from "dotenv";
+dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 3000;
-const MATCH_ID = process.env.MATCH_ID || "18717888";
+const PORT = process.env.PORT || 10000;
+const MATCH_ID = process.env.MATCH_ID || "18741543";
 
 app.use(cors());
-app.use(express.static(path.join(__dirname, "public")));
+app.use(express.static(path.join(process.cwd(), "public")));
 
-// API route to fetch CricHeroes live score (dummy example)
-app.get("/api/score", async (req, res) => {
+async function fetchHTML(id) {
+  const url = `https://cricheroes.com/scorecard/${id}/live`;
+  const res = await axios.get(url, {
+    headers: { "User-Agent": "Mozilla/5.0" },
+    timeout: 10000
+  });
+  return res.data;
+}
+
+function parseHTML(html) {
+  const $ = cheerio.load(html);
+  // Example path selectors may vary – adapt after inspecting HTML structure
+  const score = $(".some-score-selector").text().trim();
+  const batsManEls = $(".some-batsman-selector");
+  const batsman1 = batsManEls.eq(0).text().trim() || "";
+  const batsman2 = batsManEls.eq(1).text().trim() || "";
+  const rr = $(".some-rr-selector").text().trim();
+  const crr = $(".some-crr-selector").text().trim();
+  const bowler = $(".some-bowler-selector").text().trim() || "";
+  const ballsEl = $(".recent-balls-selector span"); // e.g. lot of spans
+  const balls = ballsEl.map((i, el) => $(el).text().trim()).get().slice(-6);
+  return { batsman1, batsman2, score, rr, crr, bowler, balls };
+}
+
+app.get("/api/score", async (_, res) => {
   try {
-    // यहां CricHeroes से data fetch करना होगा
-    // अभी dummy data भेज रहा हूँ
-    res.json({
-      team1: "DSK Sedwa",
-      team2: "Hajar Baba Club",
-      score: "45/2",
-      overs: "6.3",
-      batsman: "Player A - 23(15)",
-      bowler: "Player B - 1/10 (2)"
-    });
+    const html = await fetchHTML(MATCH_ID);
+    const data = parseHTML(html);
+    res.json(data);
   } catch (err) {
-    res.status(500).json({ error: "Error fetching score" });
+    console.error("Fetch & parse error:", err.message);
+    res.status(500).json({ error: "Unable to fetch score" });
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`Server running at http://localhost:${PORT}`);
-});
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
